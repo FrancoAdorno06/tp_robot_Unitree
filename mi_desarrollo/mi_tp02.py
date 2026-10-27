@@ -40,7 +40,37 @@ def comando_es_valido(comando):
       - que el tiempo no sea negativo
     """
     # TU CODIGO ACA
-    
+    if not isinstance(comando, tuple) or len(comando) == 0:
+        return False
+
+    nombre = comando[0]
+
+    if nombre == "avanzar" or nombre == "girar":
+        if len(comando) != 3:
+            return False
+
+        velocidad = comando[1]
+        tiempo = comando[2]
+
+        # bool es un tipo numerico en Python, pero no cuenta como dato valido.
+        if (not isinstance(velocidad, (int, float))
+                or isinstance(velocidad, bool)):
+            return False
+
+        if (not isinstance(tiempo, (int, float))
+                or isinstance(tiempo, bool)):
+            return False
+
+        if tiempo < 0:
+            return False
+
+        return True
+
+    if nombre == "detenerse" or nombre == "saludar":
+        return len(comando) == 1
+
+    return False
+
 
 
 # =====================================================================
@@ -61,6 +91,29 @@ def ejecutar_comando(robot, comando):
     Eso llega como un ErrorDeSeguridad y conviene atraparlo.
     """
     # TU CODIGO ACA
+    try:
+        nombre = comando[0]
+
+        if nombre == "avanzar":
+            robot.avanzar(velocidad=comando[1], tiempo=comando[2])
+            return "Comando avanzar ejecutado correctamente."
+
+        if nombre == "girar":
+            robot.girar(velocidad=comando[1], tiempo=comando[2])
+            return "Comando girar ejecutado correctamente."
+
+        if nombre == "detenerse":
+            robot.detenerse()
+            return "Comando detenerse ejecutado correctamente."
+
+        if nombre == "saludar":
+            robot.saludar()
+            return "Comando saludar ejecutado correctamente."
+
+        return "Comando rechazado: nombre de comando desconocido."
+
+    except ErrorDeSeguridad as error:
+        return "Comando rechazado por seguridad: " + str(error)
     MISION_BASICA = [
     robot.avanzar("avanzar", 0.2, 2.0),      # 0.2 x 2.0 = 0.4 metros
     robot.girar("girar", -0.5, 3.14),      # -0.5 x 3.14 = -1.57 rad = 90 grados a la derecha
@@ -84,7 +137,16 @@ def ejecutar_mision(robot, mision, historial):
     Un comando invalido NO tiene que cortar la mision.
     """
     # TU CODIGO ACA
+    for comando in mision:
+        if not comando_es_valido(comando):
+            historial.append((False, comando, "Comando invalido."))
+        else:
+            resultado = ejecutar_comando(robot, comando)
 
+            if resultado.startswith("Comando rechazado"):
+                historial.append((False, comando, resultado))
+            else:
+                historial.append((True, comando, resultado))
     
 
 
@@ -100,7 +162,25 @@ def generar_reporte(historial):
       - cual fue el motivo de cada rechazo
     """
     # TU CODIGO ACA
-    
+    ejecutados = 0
+    rechazados = 0
+
+    print("\n===== REPORTE DE LA MISION =====")
+
+    for registro in historial:
+        correcto = registro[0]
+        comando = registro[1]
+        mensaje = registro[2]
+
+        if correcto:
+            ejecutados += 1
+            print("OK:", comando, "-", mensaje)
+        else:
+            rechazados += 1
+            print("RECHAZADO:", comando, "-", mensaje)
+
+    print("\nComandos ejecutados correctamente:", ejecutados)
+    print("Comandos rechazados:", rechazados)
 
 
 # =====================================================================
